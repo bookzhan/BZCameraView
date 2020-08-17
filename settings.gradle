@@ -1,0 +1,3 @@
+include ':bzcamera'
+include ':app'
+rootProject.name = "BZCameraView"

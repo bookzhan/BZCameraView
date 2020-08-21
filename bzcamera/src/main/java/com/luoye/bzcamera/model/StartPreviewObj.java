@@ -17,6 +17,7 @@ public class StartPreviewObj {
     private int targetHeight = 1280;
     private CameraPreviewListener cameraPreviewListener = null;
     private int displayOrientation = 0;
+    private int windowRotation = 0;
     private boolean needCallBackPreviewData = false;
     private int imageFormat = ImageFormat.YV12;
 
@@ -82,5 +83,13 @@ public class StartPreviewObj {
 
     public void setImageFormat(int imageFormat) {
         this.imageFormat = imageFormat;
+    }
+
+    public int getWindowRotation() {
+        return windowRotation;
+    }
+
+    public void setWindowRotation(int windowRotation) {
+        this.windowRotation = windowRotation;
     }
 }

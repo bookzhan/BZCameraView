@@ -126,7 +126,8 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
         startPreviewObj.setCameraPreviewListener(cameraPreviewListener);
         startPreviewObj.setTargetHeight(previewTargetSizeHeight);
         startPreviewObj.setTargetWidth(previewTargetSizeWidth);
-        startPreviewObj.setDisplayOrientation(displayOrientation >= 0 ? displayOrientation : getDisplayOrientation(getContext()));
+        startPreviewObj.setDisplayOrientation(displayOrientation);
+        startPreviewObj.setWindowRotation(getWindowRotation(getContext()));
         startPreviewObj.setNeedCallBackPreviewData(needCallBackData);
         startPreviewObj.setImageFormat(imageFormat);
         Message message = new Message();
@@ -160,7 +161,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
         }
     }
 
-    public static int getDisplayOrientation(Context context) {
+    public static int getWindowRotation(Context context) {
         WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         int rotation = windowManager.getDefaultDisplay().getRotation();
         short degrees = 0;

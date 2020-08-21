@@ -270,7 +270,7 @@ public class CameraHandler extends Handler implements Camera.PreviewCallback {
                 mDisplayOrientation = startPreviewObj.getDisplayOrientation();
             } else {
                 int cameraOrientation = getCameraOrientation(startPreviewObj.getCameraId());
-                mDisplayOrientation = computeSensorToViewOffset(startPreviewObj.getCameraId(), cameraOrientation, startPreviewObj.getDisplayOrientation());
+                mDisplayOrientation = computeSensorToViewOffset(startPreviewObj.getCameraId(), cameraOrientation, startPreviewObj.getWindowRotation());
             }
             Camera.Parameters parameters = mCamera.getParameters();
             setPreviewSize(parameters, startPreviewObj.getTargetHeight(), startPreviewObj.getTargetWidth());

@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -13,6 +14,7 @@ import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
@@ -20,9 +22,11 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.AttributeSet;
 import android.util.Range;
+import android.util.Size;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -35,6 +39,9 @@ import com.luoye.bzcamera.utils.CameraCapacityCheckUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Created by zhandalin on 2019-10-25 11:40.
@@ -45,8 +52,8 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
     private static final String TAG = "bz_BZCamera2View";
     private static final long FRAME_EXPOSURE_TIME = 30000000;
     private SurfaceTexture mSurfaceTexture;
-    private int previewTargetSizeWidth = 0;
-    private int previewTargetSizeHeight = 0;
+    private int previewTargetSizeWidth = -1;
+    private int previewTargetSizeHeight = -1;
     private HandlerThread mCameraHandlerThread = null;
     private Camera2Handler mCameraHandler = null;
     private int mCurrentCameraLensFacing = CameraCharacteristics.LENS_FACING_FRONT;
@@ -74,6 +81,8 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
     private int lastSetIso = 0;
     private int equalAmount = 0;
     private Range<Integer>[] fpsRanges;
+    private int displayOrientation = -1;
+    private Size mTargetSize;
 
 
     public BZCamera2View(Context context) {
@@ -87,6 +96,15 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
     public BZCamera2View(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         setSurfaceTextureListener(this);
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (previewTargetSizeWidth < 0 || previewTargetSizeHeight < 0) {
+            previewTargetSizeWidth = w;
+            previewTargetSizeHeight = h;
+        }
     }
 
     public void onResume() {
@@ -188,14 +206,26 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
             } else {
                 BZLogUtil.w("Can't get exposureDurationRange");
             }
-
             final Integer sensor_orientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
             if (null != sensor_orientation) {
                 Integer lens_facing = characteristics.get(CameraCharacteristics.LENS_FACING);
                 if (null != lens_facing) {
                     sensorOrientation = computeSensorToViewOffset(lens_facing, sensor_orientation % 360, getDisplayOrientation(getContext()));
+                    BZLogUtil.d(TAG, "src sensor_orientation=" + sensor_orientation + " computeSensorToViewOffset=" + sensorOrientation);
                 }
             }
+            mTargetSize = new Size(previewTargetSizeHeight, previewTargetSizeWidth);
+            StreamConfigurationMap streamMap = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            if (null != streamMap) {
+                Size[] outputSizes = streamMap.getOutputSizes(ImageFormat.YUV_420_888);
+                mTargetSize = getPreferredPreviewSize(outputSizes, previewTargetSizeHeight, previewTargetSizeWidth);
+            }
+            if (null == mTargetSize) {
+                BZLogUtil.e(TAG, "null==mTargetSize");
+                return;
+            }
+            calculateTransform(mTargetSize.getHeight(), mTargetSize.getWidth());
+
             manager.openCamera(fitCameraID, new CameraDevice.StateCallback() {
                 @Override
                 public void onOpened(@NonNull CameraDevice camera) {
@@ -205,23 +235,9 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
                         lastSetIso = 0;
                         mCameraDevice = camera;
                         captureRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                        if (previewTargetSizeWidth > 0 && previewTargetSizeHeight > 0) {
-                            if (sensorOrientation == 90 || sensorOrientation == 270) {
-                                mImageReader = ImageReader.newInstance(previewTargetSizeHeight, previewTargetSizeWidth, ImageFormat.YUV_420_888, 2);
-                                surfaceTexture.setDefaultBufferSize(previewTargetSizeHeight, previewTargetSizeWidth);
-                            } else {
-                                mImageReader = ImageReader.newInstance(previewTargetSizeWidth, previewTargetSizeHeight, ImageFormat.YUV_420_888, 2);
-                                surfaceTexture.setDefaultBufferSize(previewTargetSizeWidth, previewTargetSizeHeight);
-                            }
-                        } else {
-                            if (sensorOrientation == 90 || sensorOrientation == 270) {
-                                mImageReader = ImageReader.newInstance(getHeight(), getWidth(), ImageFormat.YUV_420_888, 2);
-                                surfaceTexture.setDefaultBufferSize(getHeight(), getWidth());
-                            } else {
-                                mImageReader = ImageReader.newInstance(getWidth(), getHeight(), ImageFormat.YUV_420_888, 2);
-                                surfaceTexture.setDefaultBufferSize(getWidth(), getHeight());
-                            }
-                        }
+                        mImageReader = ImageReader.newInstance(mTargetSize.getWidth(), mTargetSize.getHeight(), ImageFormat.YUV_420_888, 2);
+                        surfaceTexture.setDefaultBufferSize(mTargetSize.getWidth(), mTargetSize.getHeight());
+
                         Surface surface = new Surface(surfaceTexture);
                         captureRequestBuilder.addTarget(surface);
                         captureRequestBuilder.addTarget(mImageReader.getSurface());
@@ -249,6 +265,41 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         } catch (Exception e) {
             BZLogUtil.e(TAG, e);
         }
+    }
+
+    //Make sure to arrange from big to small
+    private Comparator<Size> comparatorBigger = new Comparator<Size>() {
+        @Override
+        public int compare(Size lhs, Size rhs) {
+            int w = rhs.getWidth() - lhs.getWidth();
+            if (w == 0)
+                return rhs.getHeight() - lhs.getHeight();
+            return w;
+        }
+    };
+
+    private Size getPreferredPreviewSize(Size[] supportedPreviewSizes, int targetWidth, int targetHeight) {
+        BZLogUtil.d(TAG, "getPreferredPreviewSize targetWidth=" + targetWidth + " targetHeight=" + targetHeight);
+        Arrays.sort(supportedPreviewSizes, comparatorBigger);
+        for (Size supportedPreviewSize : supportedPreviewSizes) {
+            BZLogUtil.v(TAG, "supportedPreviewSize w=" + supportedPreviewSize.getWidth() + " supportedPreviewSize h=" + supportedPreviewSize.getHeight());
+        }
+        Size targetSize = null;
+        for (Size previewSize : supportedPreviewSizes) {
+            if (previewSize.getWidth() == targetWidth && previewSize.getHeight() == targetHeight) {
+                targetSize = previewSize;
+                break;
+            }
+        }
+        if (null == targetSize) {
+            for (Size previewSize : supportedPreviewSizes) {
+                if (targetSize == null || (previewSize.getWidth() >= targetWidth && previewSize.getHeight() >= targetHeight)) {
+                    targetSize = previewSize;
+                }
+            }
+        }
+        BZLogUtil.d(TAG, "targetSize=" + targetSize.toString());
+        return targetSize;
     }
 
     private CameraCaptureSession.StateCallback stateCallback = new CameraCaptureSession.StateCallback() {
@@ -409,16 +460,18 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
 
     }
 
-
     private void calculateTransform(int width, int height) {
         final Matrix matrix = new Matrix();
-        float finalWidth = getWidth();
-        float finalHeight = finalWidth * height / width;
-        if (finalHeight < getHeight()) {
-            finalHeight = getHeight();
-            finalWidth = finalHeight * width / height;
+        if (displayOrientation == 90 || displayOrientation == 270) {
+            matrix.postRotate(displayOrientation, getWidth() >> 1, getHeight() >> 1);
+            int finalWidth = getHeight();
+            int finalHeight = getWidth();
+            float scale = Math.max((float) finalWidth / width, (float) finalHeight / height);
+            matrix.postScale(width * scale / finalWidth, height * scale / finalHeight, getWidth() >> 1, getHeight() >> 1);
+        } else {
+            float scale = Math.max((float) getWidth() / width, (float) getHeight() / height);
+            matrix.postScale(width * scale / getWidth(), height * scale / getHeight(), getWidth() >> 1, getHeight() >> 1);
         }
-        matrix.postScale(finalWidth / getWidth(), finalHeight / getHeight(), getWidth() / 2, getHeight() / 2);
         post(new Runnable() {
             @Override
             public void run() {
@@ -491,16 +544,10 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         int height = image.getHeight();
         if (null != onStatusChangeListener) {
             if (!previewSuccessHasCallBack) {
-                if (sensorOrientation == 90 || sensorOrientation == 270) {
-                    onStatusChangeListener.onPreviewSuccess(mCameraDevice, height, width);
-                    calculateTransform(height, width);
-                } else {
-                    onStatusChangeListener.onPreviewSuccess(mCameraDevice, width, height);
-                    calculateTransform(width, height);
-                }
+                onStatusChangeListener.onPreviewSuccess(mCameraDevice, width, height);
+                previewSuccessHasCallBack = true;
             }
-            previewSuccessHasCallBack = true;
-            onStatusChangeListener.onImageAvailable(image, sensorOrientation, fps);
+            onStatusChangeListener.onImageAvailable(image, displayOrientation >= 0 ? displayOrientation : sensorOrientation, fps);
         }
         if (frameCount % 150 == 0) {
             frameCount = 30;
@@ -510,9 +557,6 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         if (frameCount % 30 == 0) {
             BZLogUtil.v(TAG, "onPreviewDataUpdate width=" + width + " height=" + height + " fps=" + fps);
         }
-//        if (fps < 29) {
-//            repeatingRequest();
-//        }
     }
 
     public int getIsoUpper() {
@@ -683,6 +727,10 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
 
     public void setCheckCameraCapacity(boolean checkCameraCapacity) {
         this.checkCameraCapacity = checkCameraCapacity;
+    }
+
+    public void setDisplayOrientation(int displayOrientation) {
+        this.displayOrientation = displayOrientation;
     }
 
     public interface OnStatusChangeListener {

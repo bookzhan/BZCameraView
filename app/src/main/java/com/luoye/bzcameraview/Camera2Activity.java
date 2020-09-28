@@ -1,5 +1,7 @@
 package com.luoye.bzcameraview;
 
+import android.hardware.camera2.CameraDevice;
+import android.media.Image;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -19,6 +21,19 @@ public class Camera2Activity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera2);
         bz_camera2_view = findViewById(R.id.bz_camera2_view);
+//        bz_camera2_view.setDisplayOrientation(90);
+//        bz_camera2_view.setPreviewTargetSize(480,640);
+        bz_camera2_view.setOnStatusChangeListener(new BZCamera2View.OnStatusChangeListener() {
+            @Override
+            public void onPreviewSuccess(CameraDevice mCameraDevice, int width, int height) {
+
+            }
+
+            @Override
+            public void onImageAvailable(Image image, int displayOrientation, float fps) {
+
+            }
+        });
     }
 
     @Override

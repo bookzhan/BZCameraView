@@ -464,13 +464,21 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         final Matrix matrix = new Matrix();
         if (displayOrientation == 90 || displayOrientation == 270) {
             matrix.postRotate(displayOrientation, getWidth() >> 1, getHeight() >> 1);
-            int finalWidth = getHeight();
-            int finalHeight = getWidth();
-            float scale = Math.max((float) finalWidth / width, (float) finalHeight / height);
-            matrix.postScale(width * scale / finalWidth, height * scale / finalHeight, getWidth() >> 1, getHeight() >> 1);
+            float finalWidth = getWidth();
+            float finalHeight = finalWidth * height / width;
+            if (finalHeight < getHeight()) {
+                finalHeight = getHeight();
+                finalWidth = finalHeight * width / height;
+            }
+            matrix.postScale(finalWidth / getHeight(), finalHeight / getWidth(), getWidth() >> 1, getHeight() >> 1);
         } else {
-            float scale = Math.max((float) getWidth() / width, (float) getHeight() / height);
-            matrix.postScale(width * scale / getWidth(), height * scale / getHeight(), getWidth() >> 1, getHeight() >> 1);
+            float finalWidth = getWidth();
+            float finalHeight = finalWidth * height / width;
+            if (finalHeight < getHeight()) {
+                finalHeight = getHeight();
+                finalWidth = finalHeight * width / height;
+            }
+            matrix.postScale(finalWidth / getWidth(), finalHeight / getHeight(), getWidth() >> 1, getHeight() >> 1);
         }
         post(new Runnable() {
             @Override

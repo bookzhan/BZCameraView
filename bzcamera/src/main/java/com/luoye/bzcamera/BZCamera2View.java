@@ -662,16 +662,22 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         }
     }
 
-    public synchronized void lockFocus() {
-        BZLogUtil.d(TAG, "lockFocus");
+    public void lockExposure() {
+        lockExposure(true);
+    }
+
+    public void unLockExposure() {
+        lockExposure(false);
+    }
+
+    private synchronized void lockExposure(boolean lock) {
+        BZLogUtil.d(TAG, "lockExposure lock=" + lock);
         if (null == captureRequestBuilder || null == mPreviewRequest || null == mCameraCaptureSession) {
             BZLogUtil.e(TAG, "null == captureRequestBuilder || null == mPreviewRequest || null == mCameraCaptureSession");
             return;
         }
         try {
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
-                    CaptureRequest.CONTROL_AF_TRIGGER_START);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AE_LOCK, lock);
             mPreviewRequest = captureRequestBuilder.build();
             mCameraCaptureSession.setRepeatingRequest(mPreviewRequest, captureCallback, mCameraHandler);
         } catch (Exception e) {
@@ -679,15 +685,28 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         }
     }
 
-    public synchronized void unLockFocus() {
-        BZLogUtil.d(TAG, "unLockFocus");
+    public void lockFocus() {
+        lockFocus(true);
+    }
+
+    public void unLockFocus() {
+        lockFocus(false);
+    }
+
+    private synchronized void lockFocus(boolean lock) {
+        BZLogUtil.d(TAG, "lockFocus lock=" + lock);
         if (null == captureRequestBuilder || null == mPreviewRequest || null == mCameraCaptureSession) {
             BZLogUtil.e(TAG, "null == captureRequestBuilder || null == mPreviewRequest || null == mCameraCaptureSession");
             return;
         }
         try {
-            // Reset the auto-focus trigger
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+            if (lock) {
+                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_OFF);
+                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                        CaptureRequest.CONTROL_AF_TRIGGER_START);
+            } else {
+                captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO);
+            }
             mPreviewRequest = captureRequestBuilder.build();
             mCameraCaptureSession.setRepeatingRequest(mPreviewRequest, captureCallback, mCameraHandler);
         } catch (Exception e) {
@@ -695,14 +714,22 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         }
     }
 
-    public synchronized void lockAWB() {
-        BZLogUtil.d(TAG, "lockAWB");
+    public void lockAWB() {
+        lockAWB(true);
+    }
+
+    public void unLockAWB() {
+        lockAWB(false);
+    }
+
+    private void lockAWB(boolean lock) {
+        BZLogUtil.d(TAG, "lockAWB lock=" + lock);
         if (null == captureRequestBuilder || null == mPreviewRequest || null == mCameraCaptureSession) {
             BZLogUtil.e(TAG, "null == captureRequestBuilder || null == mPreviewRequest || null == mCameraCaptureSession");
             return;
         }
         try {
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, true);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, lock);
             mPreviewRequest = captureRequestBuilder.build();
             mCameraCaptureSession.setRepeatingRequest(mPreviewRequest, captureCallback, mCameraHandler);
         } catch (Exception e) {
@@ -710,20 +737,6 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         }
     }
 
-    public synchronized void unLockAWB() {
-        BZLogUtil.d(TAG, "unLockAWB");
-        if (null == captureRequestBuilder || null == mPreviewRequest || null == mCameraCaptureSession) {
-            BZLogUtil.e(TAG, "null == captureRequestBuilder || null == mPreviewRequest || null == mCameraCaptureSession");
-            return;
-        }
-        try {
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AWB_LOCK, false);
-            mPreviewRequest = captureRequestBuilder.build();
-            mCameraCaptureSession.setRepeatingRequest(mPreviewRequest, captureCallback, mCameraHandler);
-        } catch (Exception e) {
-            BZLogUtil.e(TAG, e);
-        }
-    }
 
     public int getCurrentISO() {
         return mCurrentISO;

@@ -83,6 +83,7 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
     private Range<Integer>[] fpsRanges;
     private int displayOrientation = -1;
     private Size mTargetSize;
+    private int imageReaderFormat = ImageFormat.YUV_420_888;
 
 
     public BZCamera2View(Context context) {
@@ -235,7 +236,7 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
                         lastSetIso = 0;
                         mCameraDevice = camera;
                         captureRequestBuilder = camera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-                        mImageReader = ImageReader.newInstance(mTargetSize.getWidth(), mTargetSize.getHeight(), ImageFormat.YUV_420_888, 2);
+                        mImageReader = ImageReader.newInstance(mTargetSize.getWidth(), mTargetSize.getHeight(), imageReaderFormat, 2);
                         surfaceTexture.setDefaultBufferSize(mTargetSize.getWidth(), mTargetSize.getHeight());
 
                         Surface surface = new Surface(surfaceTexture);
@@ -547,6 +548,9 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         }
         frameCount++;
         long time = System.currentTimeMillis() - previewStartTime;
+        if (time < 30) {
+            time = 30;
+        }
         float fps = frameCount / (time / 1000.f);
         int width = image.getWidth();
         int height = image.getHeight();
@@ -557,10 +561,10 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
             }
             onStatusChangeListener.onImageAvailable(image, displayOrientation >= 0 ? displayOrientation : sensorOrientation, fps);
         }
-        if (frameCount % 150 == 0) {
-            frameCount = 30;
-            previewStartTime = System.currentTimeMillis() - 1000;
-        }
+//        if (frameCount % 150 == 0) {
+//            frameCount = 30;
+//            previewStartTime = System.currentTimeMillis() - 1000;
+//        }
         image.close();
         if (frameCount % 30 == 0) {
             BZLogUtil.v(TAG, "onPreviewDataUpdate width=" + width + " height=" + height + " fps=" + fps);
@@ -752,6 +756,10 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
 
     public void setDisplayOrientation(int displayOrientation) {
         this.displayOrientation = displayOrientation;
+    }
+
+    public void setImageReaderFormat(int imageReaderFormat) {
+        this.imageReaderFormat = imageReaderFormat;
     }
 
     public interface OnStatusChangeListener {

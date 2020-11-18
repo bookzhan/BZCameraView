@@ -6,7 +6,7 @@ import android.hardware.Camera;
  * Created by zhandalin on 2019-08-30 16:36.
  * Function:
  */
-public interface CameraStateListener {
+public interface OnCameraStateListener {
     void onPreviewSuccess(Camera camera, int width, int height);
 
     void onPreviewFail(String message);

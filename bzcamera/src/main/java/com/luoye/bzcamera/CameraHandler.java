@@ -10,7 +10,7 @@ import android.os.Looper;
 import android.os.Message;
 
 import com.bzcommon.utils.BZLogUtil;
-import com.luoye.bzcamera.listener.CameraStateListener;
+import com.luoye.bzcamera.listener.OnCameraStateListener;
 import com.luoye.bzcamera.model.FocusObj;
 import com.luoye.bzcamera.model.StartPreviewObj;
 
@@ -41,7 +41,7 @@ public class CameraHandler extends Handler implements Camera.PreviewCallback {
     private Camera mCamera = null;
     private int mDisplayOrientation = 90;
     private boolean mBooleanMirror = false;
-    private CameraStateListener mCameraStateListener = null;
+    private OnCameraStateListener mOnCameraStateListener = null;
     private Camera.Size mPreviewSize = null;
     private boolean mUseOneShot = false;
     private StartPreviewObj startPreviewObj;
@@ -348,18 +348,18 @@ public class CameraHandler extends Handler implements Camera.PreviewCallback {
                     startPreviewObj.getCameraPreviewListener().onPreviewSuccess(mCamera, mPreviewSize.width, mPreviewSize.height);
                 }
             }
-            if (null != mCameraStateListener) {
+            if (null != mOnCameraStateListener) {
                 if (mDisplayOrientation == 90 || mDisplayOrientation == 270) {
-                    mCameraStateListener.onPreviewSuccess(mCamera, mPreviewSize.height, mPreviewSize.width);
+                    mOnCameraStateListener.onPreviewSuccess(mCamera, mPreviewSize.height, mPreviewSize.width);
                 } else {
-                    mCameraStateListener.onPreviewSuccess(mCamera, mPreviewSize.width, mPreviewSize.height);
+                    mOnCameraStateListener.onPreviewSuccess(mCamera, mPreviewSize.width, mPreviewSize.height);
                 }
             }
             BZLogUtil.d(TAG, "startPreview time consuming=" + (System.currentTimeMillis() - startTime));
         } catch (Throwable e) {
             BZLogUtil.e(TAG, e);
-            if (null != mCameraStateListener) {
-                mCameraStateListener.onPreviewFail("Camera.open fail");
+            if (null != mOnCameraStateListener) {
+                mOnCameraStateListener.onPreviewFail("Camera.open fail");
             }
         }
     }
@@ -381,8 +381,8 @@ public class CameraHandler extends Handler implements Camera.PreviewCallback {
             BZLogUtil.e(TAG, e);
         }
         mCamera = null;
-        if (null != mCameraStateListener) {
-            mCameraStateListener.onCameraClose();
+        if (null != mOnCameraStateListener) {
+            mOnCameraStateListener.onCameraClose();
         }
         BZLogUtil.d(TAG, "stopPreview time consuming=" + (System.currentTimeMillis() - startTime));
     }
@@ -622,21 +622,21 @@ public class CameraHandler extends Handler implements Camera.PreviewCallback {
         return false;
     }
 
-    public void setCameraStateListener(CameraStateListener cameraStateListener) {
-        this.mCameraStateListener = cameraStateListener;
+    public void setOnCameraStateListener(OnCameraStateListener onCameraStateListener) {
+        this.mOnCameraStateListener = onCameraStateListener;
     }
 
     @Override
     public void onPreviewFrame(byte[] data, Camera camera) {
-        if (null != mCameraStateListener) {
+        if (null != mOnCameraStateListener) {
             int cameraId = 0;
             if (null != startPreviewObj) {
                 cameraId = startPreviewObj.getCameraId();
             }
             if (null != mPreviewSize) {
-                mCameraStateListener.onPreviewDataUpdate(data, mPreviewSize.width, mPreviewSize.height, mDisplayOrientation, cameraId);
+                mOnCameraStateListener.onPreviewDataUpdate(data, mPreviewSize.width, mPreviewSize.height, mDisplayOrientation, cameraId);
             } else {
-                mCameraStateListener.onPreviewDataUpdate(data, -1, -1, mDisplayOrientation, cameraId);
+                mOnCameraStateListener.onPreviewDataUpdate(data, -1, -1, mDisplayOrientation, cameraId);
             }
         }
         if (null == mCamera) {

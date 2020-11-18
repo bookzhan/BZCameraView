@@ -19,7 +19,7 @@ import android.view.WindowManager;
 
 import com.bzcommon.utils.BZLogUtil;
 import com.luoye.bzcamera.listener.CameraPreviewListener;
-import com.luoye.bzcamera.listener.CameraStateListener;
+import com.luoye.bzcamera.listener.OnCameraStateListener;
 import com.luoye.bzcamera.listener.OnTransformChangeListener;
 import com.luoye.bzcamera.model.FocusObj;
 import com.luoye.bzcamera.model.StartPreviewObj;
@@ -37,7 +37,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
     private HandlerThread mCameraHandlerThread;
     private SurfaceTexture mSurfaceTexture;
     private int mCurrentCameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
-    private CameraStateListener mCameraStateListener = null;
+    private OnCameraStateListener mOnCameraStateListener = null;
     private String mFlashMode = null;
     private float mExposureProgress = 0.5f;
     private String mWhiteBalance = null;
@@ -119,7 +119,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
         mCameraHandlerThread = new HandlerThread("CameraHandlerThread", Thread.MAX_PRIORITY);
         mCameraHandlerThread.start();
         mCameraHandler = new CameraHandler(mCameraHandlerThread.getLooper());
-        mCameraHandler.setCameraStateListener(mCameraStateListener);
+        mCameraHandler.setOnCameraStateListener(mOnCameraStateListener);
         StartPreviewObj startPreviewObj = new StartPreviewObj();
         startPreviewObj.setCameraId(getFitCameraID(mCurrentCameraID));
         startPreviewObj.setSurfaceTexture(surfaceTexture);
@@ -234,10 +234,11 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
         }
     };
 
-    public void setCameraStateListener(CameraStateListener cameraStateListener) {
-        this.mCameraStateListener = cameraStateListener;
+    public void setOnCameraStateListener(OnCameraStateListener onCameraStateListener) {
+        setNeedCallBackData(true);
+        this.mOnCameraStateListener = onCameraStateListener;
         if (null != mCameraHandler) {
-            mCameraHandler.setCameraStateListener(mCameraStateListener);
+            mCameraHandler.setOnCameraStateListener(mOnCameraStateListener);
         }
     }
 

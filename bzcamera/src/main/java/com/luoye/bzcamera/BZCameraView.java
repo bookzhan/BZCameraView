@@ -18,12 +18,12 @@ import android.view.TextureView;
 import android.view.WindowManager;
 
 import com.bzcommon.utils.BZLogUtil;
+import com.bzcommon.utils.BZPermissionUtil;
 import com.luoye.bzcamera.listener.CameraPreviewListener;
 import com.luoye.bzcamera.listener.OnCameraStateListener;
 import com.luoye.bzcamera.listener.OnTransformChangeListener;
 import com.luoye.bzcamera.model.FocusObj;
 import com.luoye.bzcamera.model.StartPreviewObj;
-import com.luoye.bzcamera.utils.PermissionUtil;
 
 /**
  * Created by zhandalin on 2019-08-29 11:03.
@@ -104,7 +104,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
             return;
         }
         //Granted Permission
-        if (!PermissionUtil.isPermissionGranted(getContext(), Manifest.permission.CAMERA)) {
+        if (!BZPermissionUtil.isPermissionGranted(getContext(), Manifest.permission.CAMERA)) {
             BZLogUtil.e(TAG, "no camera permission");
             return;
         }

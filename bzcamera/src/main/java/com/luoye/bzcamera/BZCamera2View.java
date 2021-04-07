@@ -764,6 +764,14 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
         this.imageReaderFormat = imageReaderFormat;
     }
 
+    public int getPreviewTargetSizeWidth() {
+        return previewTargetSizeWidth;
+    }
+
+    public int getPreviewTargetSizeHeight() {
+        return previewTargetSizeHeight;
+    }
+
     public interface OnStatusChangeListener {
         void onPreviewSuccess(CameraDevice mCameraDevice, int width, int height);
 

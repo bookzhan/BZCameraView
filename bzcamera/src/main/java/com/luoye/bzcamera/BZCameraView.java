@@ -396,6 +396,14 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
         this.onTransformChangeListener = onTransformChangeListener;
     }
 
+    public int getPreviewTargetSizeWidth() {
+        return previewTargetSizeWidth;
+    }
+
+    public int getPreviewTargetSizeHeight() {
+        return previewTargetSizeHeight;
+    }
+
     public double getCurrentISO() {
         return 30;
     }

@@ -110,7 +110,9 @@ public class BZCamera2View extends TextureView implements TextureView.SurfaceTex
 
     public void onResume() {
         BZLogUtil.d(TAG, "onResume");
-        startPreview();
+        if(null==mCameraHandlerThread){
+            startPreview();
+        }
     }
 
     public void startPreview() {

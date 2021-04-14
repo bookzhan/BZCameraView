@@ -5,7 +5,7 @@ publish {
     userOrg = 'bookzhan' //bintray账户下某个组织id
     groupId = 'com.luoye.bzlib' //maven仓库下库的包名，一般为模块包名
     artifactId = 'bzcamera' //项目名称
-    publishVersion = '1.0.21' //版本号
+    publishVersion = '1.0.22' //版本号
     uploadName = 'bzcamera'
     repoName = 'bzlib'
     desc = 'bzcamera util' //项目介绍，可以不写
@@ -41,5 +41,5 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation "com.luoye.bzlib:bzcommon:1.1.5"
+    implementation "com.luoye.bzlib:bzcommon:1.1.14"
 }

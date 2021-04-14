@@ -30,5 +30,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation project(path: ':bzcamera')
-    implementation "com.luoye.bzlib:bzcommon:1.1.5"
+    implementation "com.luoye.bzlib:bzcommon:1.1.14"
 }

@@ -1,4 +1,6 @@
 apply plugin: 'com.android.library'
+apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 android {
     compileSdkVersion 28
@@ -26,37 +28,67 @@ android {
     }
 }
 ext {
-    publish_group_id = 'io.github.bookzhan'
-    publish_artifact_id = "bzcamera"
-    publish_version = '1.0.22'
-    publish_description = 'bzcameralib'
+    NEXUS_USER = ''
+    NEXUS_PASSWORD = ''
+    RELEASE_SNAPSHOT = false
 
-    developer_id = 'guaishou'
-    developer_name = 'bookzhan'
-    developer_email = 'bookzhan@qq.com'
+    POM_URL_SNAP = 'https://www.bzblog.online/nexus/repository/maven-snapshots/'
+    POM_URL = 'https://www.bzblog.online/nexus/repository/maven-releases/'
 
-    github_name = 'bookzhan'
-    github_project_name = 'BZCameraView'
-    github_project_url = 'https://github.com/bookzhan/BZCameraView'
+    POM_GROUP_ID = 'com.guaishou.bzlib'
+    POM_ATRIFACT_ID = 'bzcamera'
+    POM_VERSION = '1.0.22'
 }
-File secretPropsFile = project.rootProject.file('local.properties')
-if (secretPropsFile.exists()) {
-    Properties p = new Properties()
-    p.load(new FileInputStream(secretPropsFile))
-    if(p.containsKey("signing.keyId")&&p.containsKey("signing.password")&&p.containsKey("signing.secretKeyRingFile")
-            &&p.containsKey("ossrhUsername")&&p.containsKey("ossrhPassword")){
-        apply from: 'https://raw.githubusercontent.com/bookzhan/maven-publish-gradle/master/publish.gradle'
-        println("Configuration information detected")
-        task uploadToMavenCentral(group: 'publishing') {
-            dependsOn(assemble)
-            dependsOn(publishReleasePublicationToMavencentralRepository)
+if (System.getenv('NEXUS_USER')) {
+    NEXUS_USER = System.getenv('NEXUS_USER')
+}
+if (System.getenv('NEXUS_PASSWORD')) {
+    NEXUS_PASSWORD = System.getenv('NEXUS_PASSWORD')
+}
+println("NEXUS_USER=" + NEXUS_USER + " NEXUS_PASSWORD=" + NEXUS_PASSWORD)
+
+// 上传到私服
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            if (RELEASE_SNAPSHOT) {
+                //snapshot环境
+                snapshotRepository(url: POM_URL_SNAP) {
+                    authentication(userName: NEXUS_USER, password: NEXUS_PASSWORD)
+                }
+                POM_VERSION += "-SNAPSHOT"
+            } else {
+                //正式环境
+                repository(url: POM_URL) {
+                    authentication(userName: NEXUS_USER, password: NEXUS_PASSWORD)
+                }
+            }
+
+            pom.groupId = POM_GROUP_ID
+            pom.artifactId = POM_ATRIFACT_ID
+            pom.version = POM_VERSION
+
+            pom.project {
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
         }
-    }else {
-        println("Please configure the signature and account information in the local.properties file")
     }
 }
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from android.sourceSets.main.java.getSrcDirs()
+}
+artifacts {
+    archives androidSourcesJar
+}
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'io.github.bookzhan:bzcommon:1.1.14@aar'
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'com.guaishou.bzlib:bzcommon:1.1.16@aar'
 }

@@ -30,6 +30,6 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     implementation project(path: ':bzcamera')
-//    implementation 'com.guaishou.bzlib:bzcamera:1.0.22@aar'
+//    implementation 'com.guaishou.bzlib:bzcamera:1.0.23@aar'
     implementation 'com.guaishou.bzlib:bzcommon:1.1.16@aar'
 }

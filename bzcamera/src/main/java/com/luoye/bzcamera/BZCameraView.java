@@ -65,7 +65,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
     }
 
     public void onResume() {
-        BZLogUtil.d(TAG, "onResume");
+        BZLogUtil.d(TAG, "onResume this=" + this);
         if (null == mCameraHandlerThread) {
             startPreview();
         }
@@ -78,7 +78,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
     }
 
     public void onPause() {
-        BZLogUtil.d(TAG, "onPause");
+        BZLogUtil.d(TAG, "onPause this=" + this);
         stopPreview();
     }
 
@@ -100,7 +100,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
     }
 
     private synchronized void startPreview(final SurfaceTexture surfaceTexture) {
-        BZLogUtil.d(TAG, "startPreview");
+        BZLogUtil.d(TAG, "startPreview this=" + this);
         if (null == surfaceTexture) {
             BZLogUtil.w(TAG, "null == surfaceTexture");
             return;
@@ -139,11 +139,9 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
     }
 
     public synchronized void stopPreview() {
-        BZLogUtil.d(TAG, "stopPreview");
+        BZLogUtil.d(TAG, "stopPreview this=" + this);
         if (null != mCameraHandler) {
-            mCameraHandler.removeMessages(CameraHandler.MSG_START_PREVIEW);
-            mCameraHandler.removeMessages(CameraHandler.MSG_STOP_PREVIEW);
-            mCameraHandler.sendEmptyMessage(CameraHandler.MSG_STOP_PREVIEW);
+            mCameraHandler.removeAllMessage();
             mCameraHandler = null;
         }
         if (null != mCameraHandlerThread) {
@@ -153,9 +151,10 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
                 } else {
                     mCameraHandlerThread.quit();
                 }
+                BZLogUtil.d(TAG, "start join this=" + this);
                 long startTime = System.currentTimeMillis();
                 mCameraHandlerThread.join();
-                BZLogUtil.d(TAG, "mCameraHandlerThread.join() time consuming=" + (System.currentTimeMillis() - startTime));
+                BZLogUtil.d(TAG, "mCameraHandlerThread.join() time consuming=" + (System.currentTimeMillis() - startTime) + " this=" + this);
             } catch (Exception e) {
                 BZLogUtil.e(TAG, e);
             }
@@ -186,13 +185,13 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         mSurfaceTexture = surface;
-        BZLogUtil.d(TAG, "onSurfaceTextureAvailable");
+        BZLogUtil.d(TAG, "onSurfaceTextureAvailable this=" + this);
         startPreview(surface);
     }
 
     @Override
     public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-        BZLogUtil.d(TAG, "onSurfaceTextureSizeChanged width=" + width + " height=" + height);
+        BZLogUtil.d(TAG, "onSurfaceTextureSizeChanged width=" + width + " height=" + height + " this=" + this);
     }
 
     @Override
@@ -205,10 +204,13 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
 
     }
 
-    private CameraPreviewListener cameraPreviewListener = new CameraPreviewListener() {
+    private final CameraPreviewListener cameraPreviewListener = new CameraPreviewListener() {
         @Override
         public void onPreviewSuccess(Camera camera, final int width, final int height) {
-            BZLogUtil.d(TAG, "onPreviewSuccess width=" + width + " height=" + height);
+            BZLogUtil.d(TAG, "onPreviewSuccess width=" + width + " height=" + height + " this=" + BZCameraView.this);
+            if (null == mCameraHandler) {
+                return;
+            }
             post(new Runnable() {
                 @Override
                 public void run() {
@@ -233,6 +235,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
             if (null != mWhiteBalance) {
                 setWhiteBalance(mWhiteBalance);
             }
+            BZLogUtil.d(TAG, "onPreviewSuccess end this=" + BZCameraView.this);
         }
     };
 
@@ -300,6 +303,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
         if (null == mCameraHandler || null == flashMode) {
             return;
         }
+        BZLogUtil.d(TAG, "setFlashMode this=" + this);
         mFlashMode = flashMode;
         Message message = new Message();
         message.obj = flashMode;
@@ -311,6 +315,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
         if (null == mCameraHandler) {
             return;
         }
+        BZLogUtil.d(TAG, "setExposureCompensation this=" + this);
         mExposureProgress = progress;
         Message message = new Message();
         message.obj = progress;
@@ -322,6 +327,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
         if (null == mCameraHandler || null == whiteBalance) {
             return;
         }
+        BZLogUtil.d(TAG, "setWhiteBalance this=" + this);
         mWhiteBalance = whiteBalance;
         Message message = new Message();
         message.obj = whiteBalance;
@@ -330,6 +336,7 @@ public class BZCameraView extends TextureView implements TextureView.SurfaceText
     }
 
     public synchronized void switchCamera() {
+        BZLogUtil.d(TAG, "switchCamera this=" + this);
         if (mCurrentCameraID == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             mCurrentCameraID = Camera.CameraInfo.CAMERA_FACING_BACK;
         } else if (mCurrentCameraID == Camera.CameraInfo.CAMERA_FACING_BACK) {

@@ -110,6 +110,21 @@ public class CameraHandler extends Handler implements Camera.PreviewCallback {
         }
     }
 
+    public void removeAllMessage() {
+        removeMessages(MSG_START_PREVIEW);
+        removeMessages(MSG_STOP_PREVIEW);
+        removeMessages(MSG_SET_FLASH_MODE);
+        removeMessages(MSG_SET_FOCUS_POINT);
+        removeMessages(MSG_SET_WHITE_BALANCE);
+        removeMessages(MSG_SET_EXPOSURE_COMPENSATION);
+        removeMessages(MSG_SET_LOCK_EWB);
+        removeMessages(MSG_SET_UN_LOCK_EWB);
+        removeMessages(MSG_SET_LOCK_FOCUS);
+        removeMessages(MSG_SET_UN_LOCK_FOCUS);
+
+        sendEmptyMessage(CameraHandler.MSG_STOP_PREVIEW);
+    }
+
     private void lockFocus() {
         if (null == mCamera) {
             BZLogUtil.e(TAG, "lockFocus null == mCamera");

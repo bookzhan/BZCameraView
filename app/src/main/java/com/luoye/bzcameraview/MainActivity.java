@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Toast;
 
 import com.bzcommon.utils.BZLogUtil;
 import com.bzcommon.utils.BZPermissionUtil;
@@ -21,44 +22,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        requestPermission();
+        BZPermissionUtil.requestPermissionIfNot(this, Manifest.permission.CAMERA, BZPermissionUtil.CODE_REQ_PERMISSION);
     }
 
     public void Camera1Activity(View view) {
+        if (!BZPermissionUtil.requestPermissionIfNot(this, Manifest.permission.CAMERA, BZPermissionUtil.CODE_REQ_PERMISSION)) {
+            Toast.makeText(this, "Please give App sufficient permissions", Toast.LENGTH_LONG).show();
+            return;
+        }
         startActivity(new Intent(this, Camera1Activity.class));
     }
 
     public void Camera2Activity(View view) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            startActivity(new Intent(this, Camera2Activity.class));
+        if (!BZPermissionUtil.requestPermissionIfNot(this, Manifest.permission.CAMERA, BZPermissionUtil.CODE_REQ_PERMISSION)) {
+            Toast.makeText(this, "Please give App sufficient permissions", Toast.LENGTH_LONG).show();
+            return;
         }
-    }
-
-    private boolean requestPermission() {
-        ArrayList<String> permissionList = new ArrayList<>();
-        //内存卡权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN && !BZPermissionUtil.isPermissionGranted(this, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            permissionList.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        }
-        if (!BZPermissionUtil.isPermissionGranted(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        }
-        if (!BZPermissionUtil.isPermissionGranted(this, Manifest.permission.CAMERA)) {
-            permissionList.add(Manifest.permission.CAMERA);
-        }
-        if (!BZPermissionUtil.isPermissionGranted(this, Manifest.permission.RECORD_AUDIO)) {
-            permissionList.add(Manifest.permission.RECORD_AUDIO);
-        }
-
-        String[] permissionStrings = new String[permissionList.size()];
-        permissionList.toArray(permissionStrings);
-
-        if (permissionList.size() > 0) {
-            BZPermissionUtil.requestPermission(this, permissionStrings, BZPermissionUtil.CODE_REQ_PERMISSION);
-            return false;
-        } else {
-            BZLogUtil.d(TAG, "所要的权限全都有了");
-            return true;
-        }
+        startActivity(new Intent(this, Camera2Activity.class));
     }
 }

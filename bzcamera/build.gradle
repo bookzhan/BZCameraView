@@ -1,20 +1,14 @@
 apply plugin: 'com.android.library'
-apply plugin: 'maven'
 apply plugin: 'maven-publish'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion "29.0.2"
-
+    compileSdkVersion 33
 
     defaultConfig {
-        minSdkVersion 17
-        targetSdkVersion 28
-        versionCode 1
-        versionName "1.0"
+        minSdkVersion 21
+        targetSdkVersion 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
     }
 
     buildTypes {
@@ -23,9 +17,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    lintOptions {
+    lint {
         abortOnError false
     }
+    namespace 'com.luoye.bzcamera'
 }
 ext {
     NEXUS_USER = ''
@@ -37,7 +32,7 @@ ext {
 
     POM_GROUP_ID = 'com.guaishou.bzlib'
     POM_ATRIFACT_ID = 'bzcamera'
-    POM_VERSION = '1.0.23'
+    POM_VERSION = '1.0.24'
 }
 if (System.getenv('NEXUS_USER')) {
     NEXUS_USER = System.getenv('NEXUS_USER')
@@ -47,33 +42,23 @@ if (System.getenv('NEXUS_PASSWORD')) {
 }
 println("NEXUS_USER=" + NEXUS_USER + " NEXUS_PASSWORD=" + NEXUS_PASSWORD)
 
-// 上传到私服
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            if (RELEASE_SNAPSHOT) {
-                //snapshot环境
-                snapshotRepository(url: POM_URL_SNAP) {
-                    authentication(userName: NEXUS_USER, password: NEXUS_PASSWORD)
-                }
-                POM_VERSION += "-SNAPSHOT"
-            } else {
-                //正式环境
-                repository(url: POM_URL) {
-                    authentication(userName: NEXUS_USER, password: NEXUS_PASSWORD)
-                }
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                groupId = POM_GROUP_ID
+                artifactId = POM_ATRIFACT_ID
+                artifact androidSourcesJar
+                version = RELEASE_SNAPSHOT ? POM_VERSION + "-SNAPSHOT" : POM_VERSION
             }
-
-            pom.groupId = POM_GROUP_ID
-            pom.artifactId = POM_ATRIFACT_ID
-            pom.version = POM_VERSION
-
-            pom.project {
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
+        }
+        repositories {
+            maven {
+                url RELEASE_SNAPSHOT ? POM_URL_SNAP : POM_URL
+                credentials {
+                    username NEXUS_USER
+                    password NEXUS_PASSWORD
                 }
             }
         }
@@ -86,9 +71,8 @@ task androidSourcesJar(type: Jar) {
 artifacts {
     archives androidSourcesJar
 }
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'com.guaishou.bzlib:bzcommon:1.1.16@aar'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.guaishou.bzlib:bzcommon:1.1.24@aar'
 }
